@@ -17,19 +17,31 @@ export function initGame({ onFinish, onViewLeaderboard, onLogout }) {
     let timeLeft = 60
     let timerInterval = null
 
-    function startGame() {
+    async function startGame() {
+        // Reset state immediately even before waiting for async config
+        gameMessage.textContent = 'Loading...'
+        gameMessage.classList.remove('hidden')
+        display.innerHTML = ''
+
         const user = Storage.getCurrentUser()
-        const config = Storage.getConfig()
+        // Wait for config
+        let config;
+        try {
+            config = await Storage.getConfig()
+        } catch (e) {
+            console.error("Failed to load config", e)
+            config = { timerDuration: 60, paragraphs: [] }
+        }
 
         playerEl.textContent = user
 
         // Pick specific paragraphs or random? Assuming random from list.
-        const paragraphs = config.paragraphs.length > 0 ? config.paragraphs : ["No paragraphs configured by admin."]
+        const paragraphs = (config.paragraphs && config.paragraphs.length > 0) ? config.paragraphs : ["No paragraphs configured by admin."]
         currentText = paragraphs[Math.floor(Math.random() * paragraphs.length)]
 
         currentIndex = 0
         score = 0
-        timeLeft = config.timerDuration
+        timeLeft = config.timerDuration || 60
         isGameActive = true
 
         updateDisplay()
@@ -97,34 +109,38 @@ export function initGame({ onFinish, onViewLeaderboard, onLogout }) {
         updateDisplay()
 
         // Check Win Condition (Completed paragraph)
-        // Option: Load new paragraph? Or finish game? 
-        // Requirement says "add paragraph... timer time change". 
-        // If timer-based, usually they just keep typing. 
-        // Let's finish for now as per previous logic, but maybe we should load next paragraph?
-        // User didn't specify continuous mode. Simple completion is safer for now.
         if (currentIndex >= currentText.length) {
             finishGame("Completed!")
         }
     }
 
-    function finishGame(reason) {
+    async function finishGame(reason) {
         isGameActive = false
         window.removeEventListener('keydown', handleInput)
         if (timerInterval) clearInterval(timerInterval)
 
         const user = Storage.getCurrentUser()
-        const userData = Storage.getUserData(user)
 
-        // Update best score
-        if (score > userData.bestScore) {
-            userData.bestScore = score
-            Storage.saveUserData(user, userData)
-            gameMessage.textContent = `New High Score: ${score}! (${reason})`
-        } else {
-            gameMessage.textContent = `Game Over! Score: ${score} (${reason})`
+        // Optimistic UI updates
+        gameMessage.textContent = `Saving score... (${reason})`
+        gameMessage.classList.remove('hidden')
+
+        try {
+            const userData = await Storage.getUserData(user)
+
+            // Update best score
+            if (score > userData.bestScore) {
+                userData.bestScore = score
+                await Storage.saveUserData(user, userData)
+                gameMessage.textContent = `New High Score: ${score}! (${reason})`
+            } else {
+                gameMessage.textContent = `Game Over! Score: ${score} (${reason})`
+            }
+        } catch (e) {
+            console.error("Error saving score", e)
+            gameMessage.textContent = `Game Over! Score: ${score} (${reason}) (Offline)`
         }
 
-        gameMessage.classList.remove('hidden')
         restartBtn.classList.remove('hidden')
 
         if (onFinish) onFinish(score)

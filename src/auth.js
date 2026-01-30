@@ -39,7 +39,7 @@ export function initAuth(onLoginSuccess, onAdminLogin) {
         }
     })
 
-    loginForm.addEventListener('submit', (e) => {
+    loginForm.addEventListener('submit', async (e) => {
         e.preventDefault()
         const username = usernameInput.value.trim()
         const password = passwordInput.value.trim()
@@ -48,6 +48,7 @@ export function initAuth(onLoginSuccess, onAdminLogin) {
 
         if (isAdminMode) {
             // Admin Login
+            // Admin creds are hardcoded so we don't need async here, but consistent interface is okay
             if (username === ADMIN_CREDS.username && password === ADMIN_CREDS.password) {
                 Storage.setCurrentUser(ADMIN_CREDS.username)
                 onAdminLogin()
@@ -56,17 +57,32 @@ export function initAuth(onLoginSuccess, onAdminLogin) {
             }
         } else {
             // Player Registration
-            const users = Storage.getAllUsers()
-            if (users[username]) {
-                alert("Username taken! Please choose another name.")
-                return
-            }
+            // Check if user exists using optimized check
+            authSubmitBtn.disabled = true;
+            authSubmitBtn.textContent = "Checking...";
 
-            // Register new user
-            Storage.saveUserData(username, { bestScore: 0 })
-            Storage.setCurrentUser(username)
-            usernameInput.value = ''
-            onLoginSuccess()
+            try {
+                const exists = await Storage.checkUserExists(username)
+                if (exists) {
+                    alert("Username taken! Please choose another name.")
+                    authSubmitBtn.disabled = false;
+                    authSubmitBtn.textContent = "Start Challenge";
+                    return
+                }
+
+                // Register new user
+                await Storage.saveUserData(username, { bestScore: 0 })
+                // Login implicitly
+                Storage.setCurrentUser(username)
+                usernameInput.value = ''
+                onLoginSuccess()
+            } catch (err) {
+                console.error(err)
+                alert("An error occurred during registration. Please try again.")
+            } finally {
+                authSubmitBtn.disabled = false;
+                if (!isAdminMode) authSubmitBtn.textContent = "Start Challenge";
+            }
         }
     })
 }

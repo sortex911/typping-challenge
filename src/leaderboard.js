@@ -23,23 +23,30 @@ export function initLeaderboard({ onBack }) {
 
     observer.observe(section, { attributes: true })
 
-    function renderLeaderboard() {
-        const allUsers = Storage.getAllUsers()
-        // Convert to array
-        const sortedUsers = Object.entries(allUsers)
-            .map(([username, data]) => ({ username, score: data.bestScore }))
-            .sort((a, b) => b.score - a.score)
-            .slice(0, 10) // Top 10
+    async function renderLeaderboard() {
+        list.innerHTML = '<li class="leaderboard-item" style="justify-content:center; color: var(--text-secondary)">Loading...</li>'
 
-        list.innerHTML = sortedUsers.map((user, index) => `
-      <li class="leaderboard-item">
-        <span class="rank">#${index + 1} ${user.username}</span>
-        <span class="score">${user.score}</span>
-      </li>
-    `).join('')
+        try {
+            const allUsers = await Storage.getAllUsers()
+            // Convert to array
+            const sortedUsers = Object.entries(allUsers)
+                .map(([username, data]) => ({ username, score: data.bestScore }))
+                .sort((a, b) => b.score - a.score)
+                .slice(0, 10) // Top 10
 
-        if (sortedUsers.length === 0) {
-            list.innerHTML = '<li class="leaderboard-item" style="justify-content:center; color: var(--text-secondary)">No records yet</li>'
+            list.innerHTML = sortedUsers.map((user, index) => `
+          <li class="leaderboard-item">
+            <span class="rank">#${index + 1} ${user.username}</span>
+            <span class="score">${user.score}</span>
+          </li>
+        `).join('')
+
+            if (sortedUsers.length === 0) {
+                list.innerHTML = '<li class="leaderboard-item" style="justify-content:center; color: var(--text-secondary)">No records yet</li>'
+            }
+        } catch (e) {
+            console.error(e)
+            list.innerHTML = '<li class="leaderboard-item" style="justify-content:center; color: var(--error-color)">Error loading data</li>'
         }
     }
 

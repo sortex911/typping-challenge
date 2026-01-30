@@ -11,20 +11,24 @@ export function initAdmin(onLogout) {
     const userList = document.getElementById('user-list')
 
     // Refresh UI logic
-    function render() {
-        const config = Storage.getConfig()
+    async function render() {
+        const config = await Storage.getConfig()
         timerInput.value = config.timerDuration
 
         // Render Paragraphs
-        paraList.innerHTML = config.paragraphs.map((p, index) => `
-        <li style="border-bottom:1px solid rgba(255,255,255,0.1); padding:5px; display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:0.9rem; text-align:left; flex:1; margin-right:10px;">${p.substring(0, 50)}${p.length > 50 ? '...' : ''}</span>
-            <button data-index="${index}" class="delete-para-btn" style="background:none; border:none; color:var(--error-color); cursor:pointer;">✕</button>
-        </li>
-      `).join('')
+        if (config.paragraphs) {
+            paraList.innerHTML = config.paragraphs.map((p, index) => `
+            <li style="border-bottom:1px solid rgba(255,255,255,0.1); padding:5px; display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:0.9rem; text-align:left; flex:1; margin-right:10px;">${p.substring(0, 50)}${p.length > 50 ? '...' : ''}</span>
+                <button data-index="${index}" class="delete-para-btn" style="background:none; border:none; color:var(--error-color); cursor:pointer;">✕</button>
+            </li>
+          `).join('')
+        } else {
+            paraList.innerHTML = ''
+        }
 
         // Render Users
-        const users = Storage.getAllUsers()
+        const users = await Storage.getAllUsers()
         const userArray = Object.entries(users).map(([name, data]) => ({ name, ...data }))
             .sort((a, b) => b.bestScore - a.bestScore)
 
@@ -58,41 +62,50 @@ export function initAdmin(onLogout) {
         })
     }
 
-    function deleteUser(username) {
-        Storage.deleteUser(username)
+    async function deleteUser(username) {
+        await Storage.deleteUser(username)
         render()
     }
 
-    function deleteParagraph(index) {
-        const config = Storage.getConfig()
-        config.paragraphs.splice(index, 1)
-        Storage.saveConfig(config)
-        render()
+    async function deleteParagraph(index) {
+        const config = await Storage.getConfig()
+        if (config.paragraphs) {
+            config.paragraphs.splice(index, 1)
+            await Storage.saveConfig(config)
+            render()
+        }
     }
 
-    addParaBtn.addEventListener('click', () => {
+    addParaBtn.addEventListener('click', async () => {
         const text = newParaInput.value.trim()
         if (!text) return
 
-        const config = Storage.getConfig()
+        addParaBtn.disabled = true;
+        const config = await Storage.getConfig()
+        if (!config.paragraphs) config.paragraphs = []
         config.paragraphs.push(text)
-        Storage.saveConfig(config)
+        await Storage.saveConfig(config)
         newParaInput.value = ''
-        render()
+        await render()
+        addParaBtn.disabled = false;
         alert('Paragraph added!')
     })
 
-    saveBtn.addEventListener('click', () => {
+    saveBtn.addEventListener('click', async () => {
         const duration = parseInt(timerInput.value)
         if (isNaN(duration) || duration < 5) {
             alert("Please enter a valid duration (min 5 seconds)")
             return
         }
 
-        const config = Storage.getConfig()
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Saving...';
+        const config = await Storage.getConfig()
         config.timerDuration = duration
-        Storage.saveConfig(config)
+        await Storage.saveConfig(config)
         alert('Settings Saved!')
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Save Changes';
     })
 
     logoutBtn.addEventListener('click', () => {

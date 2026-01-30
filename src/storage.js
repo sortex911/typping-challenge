@@ -1,7 +1,7 @@
+import { supabase } from './supabaseClient.js'
+
 const KEYS = {
-    CURRENT_USER: 'tc_current_user',
-    USERS: 'tc_users',
-    CONFIG: 'tc_config'
+    CURRENT_USER: 'tc_current_user'
 }
 
 const DEFAULT_PARAGRAPHS = [
@@ -30,34 +30,124 @@ export const Storage = {
         localStorage.removeItem(KEYS.CURRENT_USER)
     },
 
-    getUserData: (username) => {
-        const users = JSON.parse(localStorage.getItem(KEYS.USERS) || '{}')
-        return users[username] || { bestScore: 0 }
+    getUserData: async (username) => {
+        try {
+            const { data, error } = await supabase
+                .from('players')
+                .select('*')
+                .eq('username', username)
+                .single()
+
+            if (error && error.code !== 'PGRST116') { // PGRST116 is "Relation not found" or "No rows found"
+                console.error('Error fetching user data:', error)
+                return { bestScore: 0 }
+            }
+
+            if (!data) return { bestScore: 0 }
+            return { bestScore: data.best_score || 0 }
+        } catch (e) {
+            console.error(e)
+            return { bestScore: 0 }
+        }
     },
 
-    saveUserData: (username, data) => {
-        const users = JSON.parse(localStorage.getItem(KEYS.USERS) || '{}')
-        users[username] = { ...users[username], ...data }
-        localStorage.setItem(KEYS.USERS, JSON.stringify(users))
+    saveUserData: async (username, data) => {
+        try {
+            const updateData = { username }
+            if (data.bestScore !== undefined) updateData.best_score = data.bestScore
+
+            const { error } = await supabase
+                .from('players')
+                .upsert(updateData)
+
+            if (error) console.error('Error saving user data:', error)
+        } catch (e) {
+            console.error(e)
+        }
     },
 
-    getAllUsers: () => {
-        return JSON.parse(localStorage.getItem(KEYS.USERS) || '{}')
+    getAllUsers: async () => {
+        try {
+            const { data, error } = await supabase
+                .from('players')
+                .select('*')
+                .order('best_score', { ascending: false })
+
+            if (error) {
+                console.error('Error fetching all users:', error)
+                return {}
+            }
+
+            const usersMap = {}
+            data.forEach(user => {
+                usersMap[user.username] = { bestScore: user.best_score }
+            })
+            return usersMap
+        } catch (e) {
+            console.error(e)
+            return {}
+        }
     },
 
-    deleteUser: (username) => {
-        const users = JSON.parse(localStorage.getItem(KEYS.USERS) || '{}')
-        delete users[username]
-        localStorage.setItem(KEYS.USERS, JSON.stringify(users))
+    checkUserExists: async (username) => {
+        try {
+            const { data, error } = await supabase
+                .from('players')
+                .select('username')
+                .eq('username', username)
+                .maybeSingle()
+
+            if (error) {
+                console.error("Error checking user:", error)
+                return false
+            }
+            return !!data
+        } catch (e) {
+            console.error(e)
+            return false
+        }
     },
 
-    getConfig: () => {
-        return JSON.parse(localStorage.getItem(KEYS.CONFIG)) || DEFAULT_CONFIG
+    deleteUser: async (username) => {
+        try {
+            const { error } = await supabase
+                .from('players')
+                .delete()
+                .eq('username', username)
+
+            if (error) console.error('Error deleting user:', error)
+        } catch (e) {
+            console.error(e)
+        }
     },
 
-    saveConfig: (config) => {
-        localStorage.setItem(KEYS.CONFIG, JSON.stringify(config))
+    getConfig: async () => {
+        try {
+            const { data, error } = await supabase
+                .from('game_config')
+                .select('value')
+                .eq('key', 'main_config')
+                .single()
+
+            if (error || !data) {
+                return DEFAULT_CONFIG
+            }
+            return data.value
+        } catch (e) {
+            console.error(e)
+            return DEFAULT_CONFIG
+        }
     },
 
-    getKeys: () => KEYS // Export keys for external use if needed
+    saveConfig: async (config) => {
+        try {
+            const { error } = await supabase
+                .from('game_config')
+                .upsert({ key: 'main_config', value: config })
+
+            if (error) console.error('Error saving config:', error)
+        } catch (e) {
+            console.error(e)
+        }
+    }
 }
