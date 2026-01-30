@@ -36,9 +36,9 @@ export const Storage = {
                 .from('players')
                 .select('*')
                 .eq('username', username)
-                .single()
+                .maybeSingle()
 
-            if (error && error.code !== 'PGRST116') { // PGRST116 is "Relation not found" or "No rows found"
+            if (error) {
                 console.error('Error fetching user data:', error)
                 return { bestScore: 0 }
             }
@@ -99,12 +99,12 @@ export const Storage = {
 
             if (error) {
                 console.error("Error checking user:", error)
-                return false
+                throw error
             }
             return !!data
         } catch (e) {
             console.error(e)
-            return false
+            throw e
         }
     },
 
@@ -127,15 +127,23 @@ export const Storage = {
                 .from('game_config')
                 .select('value')
                 .eq('key', 'main_config')
-                .single()
+                .maybeSingle()
 
-            if (error || !data) {
-                return DEFAULT_CONFIG
+            if (error) {
+                console.error('Error fetching config:', error)
+                return JSON.parse(JSON.stringify(DEFAULT_CONFIG))
+            }
+
+            if (!data) {
+                console.log("Seeding default config...")
+                const defaults = JSON.parse(JSON.stringify(DEFAULT_CONFIG))
+                await Storage.saveConfig(defaults)
+                return defaults
             }
             return data.value
         } catch (e) {
             console.error(e)
-            return DEFAULT_CONFIG
+            return JSON.parse(JSON.stringify(DEFAULT_CONFIG))
         }
     },
 
