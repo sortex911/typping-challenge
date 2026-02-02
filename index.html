@@ -23,7 +23,31 @@
     <div class="shape shape-4"></div>
     <div class="shape shape-5"></div>
   </div>
-  
+
+  <!-- Animated floating letters -->
+  <div class="floating-letters">
+    <span class="letter letter-1">A</span>
+    <span class="letter letter-2">Z</span>
+    <span class="letter letter-3">Q</span>
+    <span class="letter letter-4">W</span>
+    <span class="letter letter-5">E</span>
+    <span class="letter letter-6">R</span>
+    <span class="letter letter-7">T</span>
+    <span class="letter letter-8">Y</span>
+    <span class="letter letter-9">U</span>
+    <span class="letter letter-10">I</span>
+    <span class="letter letter-11">O</span>
+    <span class="letter letter-12">P</span>
+    <span class="letter letter-13">S</span>
+    <span class="letter letter-14">D</span>
+    <span class="letter letter-15">F</span>
+    <span class="letter letter-16">G</span>
+    <span class="letter letter-17">H</span>
+    <span class="letter letter-18">J</span>
+    <span class="letter letter-19">K</span>
+    <span class="letter letter-20">L</span>
+  </div>
+
   <div id="app">
     <!-- Auth Screen -->
     <section id="auth-screen" class="screen active">
@@ -39,6 +63,8 @@
           <button type="submit" id="auth-submit" class="btn primary">Start Challenge</button>
           <p style="margin-top: 15px; cursor: pointer; color: var(--text-secondary); font-size: 0.9rem;"
             id="toggle-admin">Admin Access</p>
+          <p style="margin-top: 10px; cursor: pointer; color: var(--text-secondary); font-size: 0.9rem;"
+            id="open-about">About Us</p>
         </form>
       </div>
     </section>
@@ -117,7 +143,28 @@
         <button id="back-to-game" class="btn secondary">Back to Game</button>
       </div>
     </section>
+
+    <!-- About Screen -->
+    <section id="about-screen" class="screen hidden">
+      <div class="glass-card">
+        <h2>About This Project</h2>
+        <div class="about-content" style="text-align: left; margin: 20px 0; line-height: 1.6;">
+          <p>Typing Challenge is built to help you improve your typing speed and accuracy through competitive practice.
+          </p>
+          <div class="contact-details"
+            style="margin-top: 20px; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 10px;">
+            <p><strong>Developed by:</strong> sortex</p>
+            <p><strong>Email:</strong> <a href="mailto:sortex911@gmail.com"
+                style="color: var(--primary-color);">sortex911@gmail.com</a></p>
+            <p><strong>LinkedIn:</strong> <a href="https://www.linkedin.com/in/abhishek-ps-52007336b" target="_blank"
+                style="color: var(--primary-color);">connect with me</a></p>
+          </div>
+        </div>
+        <button id="back-from-about" class="btn secondary">Back</button>
+      </div>
+    </section>
   </div>
+  <footer id="main-footer" class="main-footer">Developed by sortex</footer>
   <script type="module" src="./main.js"></script>
 </body>
 

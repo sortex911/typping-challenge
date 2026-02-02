@@ -3,13 +3,15 @@ import { initAuth, getCurrentUser } from './src/auth.js'
 import { initGame } from './src/game.js'
 import { initLeaderboard } from './src/leaderboard.js'
 import { initAdmin } from './src/admin.js'
+import { initAbout } from './src/about.js'
 
 // Simple Router / State Manager
 const screens = {
     auth: document.getElementById('auth-screen'),
     game: document.getElementById('game-screen'),
     leaderboard: document.getElementById('leaderboard-screen'),
-    admin: document.getElementById('admin-screen')
+    admin: document.getElementById('admin-screen'),
+    about: document.getElementById('about-screen')
 }
 
 export function switchScreen(screenName) {
@@ -62,6 +64,11 @@ function initApp() {
     initLeaderboard({
         onBack: () => switchScreen('game')
     })
+
+    initAbout(() => switchScreen('auth'))
+
+    // About link on Login Page
+    document.getElementById('open-about').addEventListener('click', () => switchScreen('about'))
 
     if (user) {
         if (user === 'sortex') {
