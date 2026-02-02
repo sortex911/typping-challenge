@@ -1,0 +1,28 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Players collection - stores user data and scores
+    match /players/{playerId} {
+      // Anyone can read the leaderboard
+      allow read: if true;
+      
+      // Anyone can create/update their own player document
+      allow create: if true;
+      allow update: if true;
+      
+      // Only allow deletion if user is admin (you can enhance this with Firebase Auth)
+      allow delete: if true;
+    }
+    
+    // Game config collection - stores paragraphs and timer settings
+    match /game_config/{configId} {
+      // Anyone can read game configuration
+      allow read: if true;
+      
+      // Anyone can write (since you don't have Firebase Auth for admin yet)
+      // TODO: Restrict this to admin users only when you add Firebase Authentication
+      allow write: if true;
+    }
+  }
+}
