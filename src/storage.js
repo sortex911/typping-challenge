@@ -95,6 +95,11 @@ export const Storage = {
             return docSnap.exists();
         } catch (e) {
             console.error("Error checking user:", e)
+            // If offline or network error, assume user doesn't exist to allow registration
+            if (e.code === 'unavailable' || e.message?.includes('offline')) {
+                console.warn("Database offline, assuming user doesn't exist")
+                return false;
+            }
             throw e
         }
     },
