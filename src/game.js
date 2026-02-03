@@ -16,6 +16,7 @@ export function initGame({ onFinish, onViewLeaderboard, onLogout }) {
     let isGameActive = false
     let timeLeft = 60
     let timerInterval = null
+    let charStatuses = [] // Tracks status of each character: null, 'correct', 'incorrect'
 
     async function startGame() {
         // Reset state immediately even before waiting for async config
@@ -41,6 +42,7 @@ export function initGame({ onFinish, onViewLeaderboard, onLogout }) {
 
         currentIndex = 0
         score = 0
+        charStatuses = new Array(currentText.length).fill(null)
         timeLeft = config.timerDuration || 60
         isGameActive = true
 
@@ -73,8 +75,10 @@ export function initGame({ onFinish, onViewLeaderboard, onLogout }) {
         let html = ''
         for (let i = 0; i < currentText.length; i++) {
             let classes = 'char'
-            if (i < currentIndex) classes += ' correct'
-            else if (i === currentIndex) classes += ' current'
+            if (charStatuses[i] === 'correct') classes += ' correct'
+            else if (charStatuses[i] === 'incorrect') classes += ' incorrect'
+
+            if (i === currentIndex) classes += ' current'
 
             html += `<span class="${classes}">${currentText[i]}</span>`
         }
@@ -99,11 +103,14 @@ export function initGame({ onFinish, onViewLeaderboard, onLogout }) {
         if (e.key === expectedChar) {
             // Correct
             score += 1
-            currentIndex++
+            charStatuses[currentIndex] = 'correct'
         } else {
             // Incorrect
             score -= 1
+            charStatuses[currentIndex] = 'incorrect'
         }
+
+        currentIndex++
 
         scoreEl.textContent = score
         updateDisplay()
