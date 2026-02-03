@@ -4,6 +4,8 @@ import { initGame } from './src/game.js'
 import { initLeaderboard } from './src/leaderboard.js'
 import { initAdmin } from './src/admin.js'
 import { initAbout } from './src/about.js'
+import { initThief } from './src/thief.js'
+import { initKeyboardRobots, setKeyboardVisibility } from './src/keyboard_robots.js'
 
 // Simple Router / State Manager
 const screens = {
@@ -24,6 +26,10 @@ export function switchScreen(screenName) {
 
     const target = screens[screenName]
     target.classList.remove('hidden')
+
+    // Control Keyboard Visibility - Only for auth screen
+    setKeyboardVisibility(screenName === 'auth')
+
     // Small delay to allow display:flex to apply before opacity transition
     requestAnimationFrame(() => {
         target.classList.add('active')
@@ -66,6 +72,9 @@ function initApp() {
     })
 
     initAbout(() => switchScreen('auth'))
+
+    initThief()
+    initKeyboardRobots()
 
     // About link on Login Page
     document.getElementById('open-about').addEventListener('click', () => switchScreen('about'))
